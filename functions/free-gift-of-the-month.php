@@ -11,8 +11,8 @@ class VST_FreeGifts {
 
     public static $version = '0.1';
     
-		public const META_FIELD = '_product__is_freegift';
-		
+    public const META_FIELD = '_product__is_freegift';
+    
     function __construct() {
         
         add_action( 'woocommerce_cart_contents', array( $this, 'show_freegift_offers') );
@@ -25,12 +25,12 @@ class VST_FreeGifts {
         add_action( 'woocommerce_order_status_completed', array( $this, 'mark_freegifts_claimed') );
         add_action( 'wp_login', array( $this, 'remove_invalid_freegifts_from_cart'), 10, 2 );
         add_action( 'woocommerce_cart_item_removed', array( $this, 'check_to_remove_all_freegifts_from_cart'), 10, 2 );
-				
-				// Add & handle custom meta field to products
-				add_action( 'woocommerce_product_options_general_product_data', array( $this, 'add_freegift_meta_field'), 10, 1 );
-				add_action( 'woocommerce_process_product_meta', array( $this, 'save_freegift_meta_field'), 10, 1 );
         
-				// TODO: get correct name for this filter 
+        // Add & handle custom meta field to products
+        add_action( 'woocommerce_product_options_general_product_data', array( $this, 'add_freegift_meta_field'), 10, 1 );
+        add_action( 'woocommerce_process_product_meta', array( $this, 'save_freegift_meta_field'), 10, 1 );
+        
+        // TODO: get correct name for this filter 
         add_filter( 'woocommerce_vst_cart_price', array( $this, 'display_freegift_price'), 10, 2 );
         add_filter( 'woocommerce_cart_item_subtotal', array( $this, 'display_freegift_price_on_checkout'), 100, 3 );
         
@@ -47,34 +47,34 @@ class VST_FreeGifts {
         
     }
 
-		/**
-		 * Callback for 'woocommerce_product_options_general_product_data'
-		 * @param int $post_id
-		 */
-		public function add_freegift_meta_field( $post_id ) {
-			
-				echo '<div class="options_group">';
-				
-				woocommerce_wp_checkbox(
-						array(
-								'id' => self::META_FIELD,
-								'label' => __( 'Free Gift of the Month', 'woocommerce' ),
-								'desc_tip' => 'true',
-								'description' => __('Check this field for the free gift product', 'woocommerce' )
-						));
-				
-				echo '</div>';
-		}
-		
-		
-		/**
-		 * Callback for 'woocommerce_process_product_meta'
-		 * @param int $post_id
-		 */
-		public function save_freegift_meta_field( $post_id ) {
-				$is_freegift_product = isset( $_POST[self::META_FIELD] ) ? 'yes' : 'no';
-				update_post_meta( $post_id, self::META_FIELD, $is_freegift_product );
-		}
+    /**
+     * Callback for 'woocommerce_product_options_general_product_data'
+     * @param int $post_id
+     */
+    public function add_freegift_meta_field( $post_id ) {
+      
+        echo '<div class="options_group">';
+        
+        woocommerce_wp_checkbox(
+            array(
+                'id' => self::META_FIELD,
+                'label' => __( 'Free Gift of the Month', 'woocommerce' ),
+                'desc_tip' => 'true',
+                'description' => __('Check this field for the free gift product', 'woocommerce' )
+            ));
+        
+        echo '</div>';
+    }
+    
+    
+    /**
+     * Callback for 'woocommerce_process_product_meta'
+     * @param int $post_id
+     */
+    public function save_freegift_meta_field( $post_id ) {
+        $is_freegift_product = isset( $_POST[self::META_FIELD] ) ? 'yes' : 'no';
+        update_post_meta( $post_id, self::META_FIELD, $is_freegift_product );
+    }
 
     /**
      * Callback for `woocommerce_add_to_cart_validation` filter-hook.
@@ -127,8 +127,8 @@ class VST_FreeGifts {
         $query_sql = "SELECT p.ID from {$wp}posts AS p "
                 . " LEFT JOIN `{$wp}postmeta` AS pm on p.`ID` = pm.`post_id`"
                 . " LEFT JOIN `{$wp}postmeta` AS pm_stock on p.`ID` = pm_stock.`post_id`"
-                . " WHERE pm.meta_key = '_product_freegift' AND pm.meta_value = 'yes' "		// select only freegift products
-                . " AND pm_stock.meta_key = '_stock_status' AND pm_stock.meta_value = 'instock' "	// select only products in stock 
+                . " WHERE pm.meta_key = '_product_freegift' AND pm.meta_value = 'yes' "    // select only freegift products
+                . " AND pm_stock.meta_key = '_stock_status' AND pm_stock.meta_value = 'instock' "  // select only products in stock 
                 . " AND p.post_type = 'product' AND p.post_status = 'publish' ";
 
         $rows = $wpdb->get_results( $query_sql, ARRAY_A );
@@ -267,8 +267,8 @@ class VST_FreeGifts {
         $query_sql = $wpdb->prepare("SELECT p.ID from {$wp}posts AS p "
                 . " LEFT JOIN `{$wp}postmeta` AS pm on p.`ID` = pm.`post_id`"
                 . " LEFT JOIN `{$wp}postmeta` AS pm_stock on p.`ID` = pm_stock.`post_id`"
-                . " WHERE pm.meta_key = '" . self::META_FIELD . "' AND pm.meta_value = 'yes' "		// select only freegift products
-                . " AND pm_stock.meta_key = '_stock_status' AND pm_stock.meta_value = 'instock' "	// select only products in stock 
+                . " WHERE pm.meta_key = '" . self::META_FIELD . "' AND pm.meta_value = 'yes' "    // select only freegift products
+                . " AND pm_stock.meta_key = '_stock_status' AND pm_stock.meta_value = 'instock' "  // select only products in stock 
                 . " AND p.post_type = 'product' AND p.post_status = 'publish' AND p.ID = %d ", $product_id);
 
         $result = $wpdb->get_row( $query_sql, ARRAY_A );
