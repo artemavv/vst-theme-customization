@@ -3,4 +3,6 @@
 
 # But not these files...
 !.gitignore
-functions/free-gift-of-the-month.phpx
+!functions/free-gift-of-the-month.php
+!page.php
+!header.php
