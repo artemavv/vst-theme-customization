@@ -2,6 +2,7 @@
 *
 
 # But not these files...
+!functions/
 !.gitignore
 !functions/free-gift-of-the-month.php
 !page.php

@@ -15,7 +15,7 @@ class VST_FreeGifts {
     
     function __construct() {
         
-        add_action( 'woocommerce_cart_contents', array( $this, 'show_freegift_offers') );
+        add_action( 'woocommerce_after_cart_ul_list', array( $this, 'show_freegift_offers') );
         add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts') );
         
         add_action( 'wp_ajax_claim_freegift', array( $this, 'ajax_put_freegift_in_cart') );
@@ -105,18 +105,6 @@ class VST_FreeGifts {
     public function enqueue_scripts() {
         wp_enqueue_script( 'freegifts-frontend' );
     }
-    /*
-    public function display_notices() {
-        foreach ( $this->notices as $notice ) {
-            wc_print_notice( $notice, 'notice' );
-        }
-    }
-    
-    public function add_notice( $notice ) {
-        $this->notices[] = $notice;
-    }
-     * 
-     */
     
     static function get_all_freegift_product_ids() {
         global $wpdb;
@@ -127,7 +115,7 @@ class VST_FreeGifts {
         $query_sql = "SELECT p.ID from {$wp}posts AS p "
                 . " LEFT JOIN `{$wp}postmeta` AS pm on p.`ID` = pm.`post_id`"
                 . " LEFT JOIN `{$wp}postmeta` AS pm_stock on p.`ID` = pm_stock.`post_id`"
-                . " WHERE pm.meta_key = '_product_freegift' AND pm.meta_value = 'yes' "    // select only freegift products
+                . " WHERE pm.meta_key = '" . self::META_FIELD . "' AND pm.meta_value = 'yes' "    // select only freegift products
                 . " AND pm_stock.meta_key = '_stock_status' AND pm_stock.meta_value = 'instock' "  // select only products in stock 
                 . " AND p.post_type = 'product' AND p.post_status = 'publish' ";
 
@@ -176,26 +164,21 @@ class VST_FreeGifts {
 
         if ( $eligible_for_freegifts ) {
 
-            $colspan = is_user_logged_in() ? 6 : 5;
             ?>
-            <tr>
-                <td colspan="<?php echo $colspan; ?>" class="freegifts-header">
+            <li class="freegifts-header">
                     <?php if ( count($available_freegifts) == 1 ) : ?>
                         <span>You can also claim this Free Gift of the Month &darr;&darr;&darr;</span>
                     <?php else: ?>
                         <span>You can also claim any of these Free Gifts of the Month &darr;&darr;&darr;</span>  
                     <?php endif; ?>
-                </td>
-            </tr>
+            </li>
 
             <?php
 
             foreach( $available_freegifts as $freegift_product ) {
                 $product_link = $freegift_product->get_permalink();
                 ?>
-                <tr class="freegift-product-row">
-                    <td class="product-remove">
-                    </td>
+                <li class="freegift-product-row">
                     <td class="product-name freegift-product-name" data-title="<?php esc_attr_e('Product', 'woocommerce'); ?>">
                         <?php
                         if ( ! $product_link ) {
@@ -222,7 +205,7 @@ class VST_FreeGifts {
                         </td>
                     <?php endif; ?>
 
-                </tr>
+                </li>
                 <?php
             }
         }
@@ -357,10 +340,10 @@ class VST_FreeGifts {
     }
     
     static function user_eligible_for_freegift( $user_id, $freegift_id ) {
-        $user_aidrops = self::get_claimed_aidrop_ids( $user_id );
+        $user_freegifts = self::get_claimed_freegift_ids( $user_id );
         
-        $is_claimed = isset($user_aidrops[$freegift_id]);
-        $is_unclaimed = (isset($user_aidrops[$freegift_id]) && $user_aidrops[$freegift_id] == 0 );
+        $is_claimed = isset($user_freegifts[$freegift_id]);
+        $is_unclaimed = (isset($user_freegifts[$freegift_id]) && $user_freegifts[$freegift_id] == 0 );
         if ( ! $is_claimed || $is_unclaimed ) {
             return true;
         }
@@ -393,6 +376,9 @@ class VST_FreeGifts {
     }
     
     static function check_if_deal_product_in_cart( $cart = false ) {
+			
+			return true;
+			
         if ( ! is_a($cart, 'WC_Cart') ) {
             $cart = WC()->cart;
         }
@@ -407,7 +393,7 @@ class VST_FreeGifts {
         return false;
     }
 
-    static function get_claimed_aidrop_ids( $user_id ) {
+    static function get_claimed_freegift_ids( $user_id ) {
         $freegift_list = (array) get_user_meta($user_id, 'freegifts_list', true);
         return $freegift_list;
     }
@@ -416,10 +402,10 @@ class VST_FreeGifts {
         $all_freegifts = self::get_all_freegift_product_ids();
         
         if ( $user_id ) {
-            $user_aidrops = self::get_claimed_aidrop_ids( $user_id );
+            $user_freegifts = self::get_claimed_freegift_ids( $user_id );
         }
         else {
-            $user_aidrops = array();
+            $user_freegifts = array();
         }
         
         $available_freegifts = array();
@@ -427,8 +413,8 @@ class VST_FreeGifts {
         foreach ( $all_freegifts as $freegift_id ) {
             if ( ! self::check_if_freegift_in_cart($freegift_id) ) { // must be not in cart
                 
-                $is_claimed = isset($user_aidrops[$freegift_id]);
-                $is_unclaimed = (isset($user_aidrops[$freegift_id]) && $user_aidrops[$freegift_id] == 0 );
+                $is_claimed = isset($user_freegifts[$freegift_id]);
+                $is_unclaimed = (isset($user_freegifts[$freegift_id]) && $user_freegifts[$freegift_id] == 0 );
                 
                 if ( ! $is_claimed || $is_unclaimed ) { 
                     $available_freegifts[$freegift_id] = get_product($freegift_id);
