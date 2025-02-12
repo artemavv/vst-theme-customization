@@ -64,10 +64,19 @@ global $woo_options, $woocommerce;
 				<?php
 				$homePageID = get_option( 'page_on_front' );
 				if ( have_rows( 'content_blocks', $homePageID ) ) {
+
+					$row_number = 0;
 					while ( have_rows( 'content_blocks', $homePageID ) ) {
 						the_row();
 						$boxes = get_sub_field( 'boxes' );
             if(is_array($boxes)) {
+
+				$row_number++;
+							
+							if ( $row_number > 1 ) {
+								continue;
+							}
+
 	            $currencySymbol = get_woocommerce_currency_symbol();
 						  foreach ( $boxes as $box ) {
 							$box_type = $box['box_type'];
