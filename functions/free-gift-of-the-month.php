@@ -41,8 +41,7 @@ class VST_FreeGifts {
             'all_freegifts'    => self::get_all_freegift_product_ids()
         );
 
-        
-        wp_register_script( 'freegifts-frontend', get_template_directory_uri() . '/freegifts-frontend.js', array( 'jquery' ), self::$version, true );    
+        wp_register_script( 'freegifts-frontend', get_template_directory_uri() . '/js/free-gift-of-the-month.js', array( 'jquery' ), self::$version, true );    
         wp_localize_script( 'freegifts-frontend', 'freegifts_data', $freegifts_data );
         
     }
@@ -159,16 +158,16 @@ class VST_FreeGifts {
 
         $available_freegifts = self::get_available_freegift_products( $user_id );
                 
-        $eligible_for_freegifts = self::check_if_deal_product_in_cart() && count($available_freegifts) > 0;
+        $eligible_for_freegifts = self::check_if_deal_product_in_cart() && count($available_freegifts) > 0; 
 
         if ( $eligible_for_freegifts ) {
 
             ?>
             <li class="cart_item freegifts-header">
                 <?php if ( count($available_freegifts) == 1 ) : ?>
-                    <span>You can also claim this Free Gift of the Month &darr;&darr;&darr;</span>
+                    <span><?php _e('You can also claim this Free Gift of the Month', 'vstbuzz' ); ?> &darr;&darr;&darr;</span>
                 <?php else: ?>
-                    <span>You can also claim any of these Free Gifts of the Month &darr;&darr;&darr;</span>  
+                    <span><?php _e('You can also claim any of these Free Gifts of the Month', 'vstbuzz' ); ?> &darr;&darr;&darr;</span>  
                 <?php endif; ?>
             </li>
 
@@ -181,11 +180,12 @@ class VST_FreeGifts {
                 $meta_box_tech_note_additional = get_post_meta( $product_id, "meta-box-tech-note-additional", true );
                 $product_link                  = $freegift_product->get_permalink();
 
-                $claim_link = sprintf( '<a href="%s" class="claim_free_gift" title="%s" aria-label="%s" data-product_id="%s"> GET IT </a>',
+                $claim_link = sprintf( '<a href="%s" class="claim_free_gift" title="%s" aria-label="%s" data-freegift-id="%s">%s</a>',
                         "#", 
                         "Claim free gift",
                         "Claim free gift",
-                        esc_attr( $product_id )
+                        esc_attr( $product_id ),
+                        __( 'GET IT', 'vstbuzz' )
             );
                 ?>
                 <li class="cart_item freegift-product-row">
@@ -246,11 +246,11 @@ class VST_FreeGifts {
                   
                   ?>
                   <div class="cart_item__total-savings">
-                    <div class="free-gift-price" >FREE</div>
+                    <div class="free-gift-price" ><?php _e( 'FREE', 'vstbuzz' ); ?></div>
                     <div class="cart_item__total-savings-save"><?php echo $cart_item_you_save; ?></div>
                   </div>
                   <div class="cart_item__total-price">
-					  <?php echo $claim_link; ?>
+                    <?php echo $claim_link; //TODO add loader gif there ?>
                   </div>
                   
                 </div>

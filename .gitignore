@@ -11,3 +11,5 @@
 !woocommerce/
 !woocommerce/cart/
 !woocommerce/cart/cart.php
+!js
+!js/free-gift-of-the-month.js
