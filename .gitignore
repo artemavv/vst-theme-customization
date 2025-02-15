@@ -8,4 +8,6 @@
 !page.php
 !header.php
 !style.css
-
+!woocommerce/
+!woocommerce/cart/
+!woocommerce/cart/cart.php
