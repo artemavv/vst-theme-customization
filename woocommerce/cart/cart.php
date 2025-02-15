@@ -195,7 +195,9 @@ $available_points_value = $points_value;
               </li>
 				<?php
 			}
-		} ?>
+		}
+		do_action( 'woocommerce_after_cart_ul_list' );  // added this to display 'Free Gift of the Month' offers
+		 ?>
     </ul>
 
 

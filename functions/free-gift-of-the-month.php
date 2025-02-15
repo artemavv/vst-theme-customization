@@ -9,7 +9,7 @@
 
 class VST_FreeGifts {
 
-    public static $version = '0.1';
+    public static $version = '0.2';
     
     public const META_FIELD = '_product__is_freegift';
     
@@ -154,59 +154,131 @@ class VST_FreeGifts {
     }
      
     public function show_freegift_offers() {
+        
         $user_id = get_current_user_id();
 
         $available_freegifts = self::get_available_freegift_products( $user_id );
                 
         $eligible_for_freegifts = self::check_if_deal_product_in_cart() && count($available_freegifts) > 0;
-        
-        $loading_image_src = get_stylesheet_directory_uri() . '/img/loading-3.gif';
 
         if ( $eligible_for_freegifts ) {
 
             ?>
-            <li class="freegifts-header">
-                    <?php if ( count($available_freegifts) == 1 ) : ?>
-                        <span>You can also claim this Free Gift of the Month &darr;&darr;&darr;</span>
-                    <?php else: ?>
-                        <span>You can also claim any of these Free Gifts of the Month &darr;&darr;&darr;</span>  
-                    <?php endif; ?>
+            <li class="cart_item freegifts-header">
+                <?php if ( count($available_freegifts) == 1 ) : ?>
+                    <span>You can also claim this Free Gift of the Month &darr;&darr;&darr;</span>
+                <?php else: ?>
+                    <span>You can also claim any of these Free Gifts of the Month &darr;&darr;&darr;</span>  
+                <?php endif; ?>
             </li>
 
             <?php
 
             foreach( $available_freegifts as $freegift_product ) {
-                $product_link = $freegift_product->get_permalink();
+
+                $product_id                    = $freegift_product->get_id();
+                $meta_box_tech_note            = get_post_meta( $product_id, "meta-box-tech-note", true );
+                $meta_box_tech_note_additional = get_post_meta( $product_id, "meta-box-tech-note-additional", true );
+                $product_link                  = $freegift_product->get_permalink();
+
+                $claim_link = sprintf( '<a href="%s" class="claim_free_gift" title="%s" aria-label="%s" data-product_id="%s"> GET IT </a>',
+                        "#", 
+                        "Claim free gift",
+                        "Claim free gift",
+                        esc_attr( $product_id )
+            );
                 ?>
-                <li class="freegift-product-row">
-                    <td class="product-name freegift-product-name" data-title="<?php esc_attr_e('Product', 'woocommerce'); ?>">
+                <li class="cart_item freegift-product-row">
+
+                    <div class="cart_item__thumbnail">
                         <?php
+                        
+                        $thumbnail = $freegift_product->get_image();
                         if ( ! $product_link ) {
-                            echo apply_filters('woocommerce_cart_item_name', $freegift_product->get_title(), false, false) . '&nbsp;';
+                            echo $thumbnail;
                         } else {
-                            echo apply_filters('woocommerce_cart_item_name', sprintf('<a href="%s">%s</a>', esc_url($product_link), $freegift_product->get_title()), false, false);
+                            printf( '<a href="%s">%s</a>', esc_url( $product_link ), $thumbnail );
                         }
                         ?>
-                    </td>
-                    <td class="product-price product-price-freegift" data-title="<?php esc_attr_e('Price', 'woocommerce'); ?>">
-                        Free
-                    </td>
-                    <?php if (is_user_logged_in()): ?>
-                        <td class="product-freegift" data-title="">
-                        </td>
-                        <td class="product-freegift" data-title="" style="text-align: center;">
-                            <span class="add-freegift" data-freegift-id="<?php echo $freegift_product->get_id(); ?>">Claim</span>
-                            <img class="loading-cart" src="<?php echo $loading_image_src; ?>" alt="..." style="display:none">
-                        </td>
-                    <?php else: ?>
-                        <td class="product-freegift" data-title="" style="text-align: center;">
-                            <span class="add-freegift" data-freegift-id="<?php echo $freegift_product->get_id(); ?>">Claim</span>
-                            <img class="loading-cart" src="<?php echo $loading_image_src; ?>" alt="..." style="display:none">
-                        </td>
-                    <?php endif; ?>
+                    </div>
 
-                </li>
+                    <div class="cart_item__name" data-title="<?php esc_attr_e( 'Free Gift', 'woocommerce' ); ?>">
+                    <?php
+                    if ( ! $product_link ) {
+                      echo wp_kses_post( $freegift_product->get_name() . '&nbsp;' );
+                    } else {
+                      echo wp_kses_post( sprintf( '<a href="%s">%s</a>', $product_link, $freegift_product->get_name() ) );
+
+                    }
+
+                    if ( $meta_box_tech_note || $meta_box_tech_note_additional ) {
+                      echo "<span class='tech-note-text'>*</span>";
+                    }
+
+                    ?>
+                </div>
                 <?php
+
+                  $sym            = get_woocommerce_currency_symbol();
+                  $product_prices = vstbuzz_get_product_prices( $freegift_product );
+
+                  
+                  /**
+                   * @var number $sale_price
+                   * @var number $regular_price
+                   * @var number $save_price
+                   */
+                  extract($product_prices);
+                  
+                  if ( ! empty( $save_price ) ) {
+                      $total_savings += $save_price;
+                  }
+
+                  ?>
+                        <div class="cart_item__total">
+                  <?php
+                  
+                  $cart_item_you_save      = $sym . number_format( $regular_price, 2 );
+
+                  if ( ! empty( $cart_item_you_save ) ) {
+                    $cart_item_you_save = '<span>' . __( 'You Save:', 'vstbuzz' ) . '</span>' . $cart_item_you_save;
+                  }
+                  
+                  ?>
+                  <div class="cart_item__total-savings">
+                    <div class="free-gift-price" >FREE</div>
+                    <div class="cart_item__total-savings-save"><?php echo $cart_item_you_save; ?></div>
+                  </div>
+                  <div class="cart_item__total-price">
+					  <?php echo $claim_link; ?>
+                  </div>
+                  
+                </div>
+                
+                <?php
+                  if ( $meta_box_tech_note ) {
+                    ?>
+                            <div class="cart_item__tech-note">
+                    <?php
+                    $tech_note_text = '<span class=\'cart_item__tech-note-text tech-note__text\'>' . get_post_meta( $product_id, "meta-box-tech-note", true ) . '</span>';
+                    echo "<span class='cart_item__tech-note-star'>*</span> <strong>Please Note: </strong>" . $tech_note_text;
+                    ?>
+                </div>
+              <?php
+            }
+
+            if ( $meta_box_tech_note_additional ) {
+              ?>
+              <div class="cart_item__tech-note">
+                <span class='cart_item__tech-note-text tech-note__text'> 
+                   <?php echo $meta_box_tech_note_additional; ?>
+                </span>
+              </div>
+              <?php } ?>
+            
+            </li>
+            
+            <?php
             }
         }
 
