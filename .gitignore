@@ -5,6 +5,7 @@
 !functions/
 !.gitignore
 !functions/free-gift-of-the-month.php
+!functions.php
 !page.php
 !header.php
 !style.css
