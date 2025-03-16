@@ -321,27 +321,18 @@ function vstbuzz_clear_cart_of_expired_products() {
 	// Check first if it's the cart or checkout page
 	if ( is_cart() || is_checkout() ) {
 
-		$todays_date = Date( 'Y-m-d' );
-
 		// Cycle through each product in the cart
 		foreach ( WC()->cart->cart_contents as $prod_in_cart ) {
 
 			// Get the Variation or Product ID
 			$prod_id   = ( isset( $prod_in_cart['variation_id'] ) && $prod_in_cart['variation_id'] != 0 ) ? $prod_in_cart['variation_id'] : $prod_in_cart['product_id'];
-			$live_deal = vstbuzz_is_product_live( $prod_id );
+			$live_deal = vstbuzz_is_product_live( $prod_id ) || vstbuzz_is_product_freegift( $prod_id ) ;
 
 			// If the product is no longer available for purchase...
 			if ( $live_deal == 0 ) {
 				$prod_unique_id = WC()->cart->generate_cart_id( $prod_id );
 				// Remove it from the cart by un-setting it
 				unset( WC()->cart->cart_contents[ $prod_unique_id ] );
-
-				// Put a notice on the cart and checkout to say that items have been removed
-				/* function vstbuzz_add_expired_notice() {
-					echo '<div class="woocommerce-info">Expired items have been removed from your order.</div>';
-				} */
-				add_action( 'woocommerce_before_checkout_form', 'vstbuzz_add_expired_notice', 12 );
-				add_action( 'woocommerce_before_cart', 'vstbuzz_add_expired_notice', 12 );
 			}
 		}
 	}
@@ -350,7 +341,7 @@ function vstbuzz_clear_cart_of_expired_products() {
 
 function vstbuzz_is_product_live( $prod_id, $skip_on_sale_check = false ) {
 	$product = wc_get_product( $prod_id );
-	//print_r($product);
+  
 	$todays_date = current_time( 'timestamp', true );
 
 	$sale_end_date = get_post_meta( $prod_id, '_sale_price_dates_to', true );
@@ -362,16 +353,22 @@ function vstbuzz_is_product_live( $prod_id, $skip_on_sale_check = false ) {
 	}
 
 	// Figure out if this product is available for purchase or not...
+  
 	if ( $never_expires == 1 || ( ( ! $skip_on_sale_check && $product->is_on_sale() ) && ( $todays_date < $sale_end_date ) ) ) {
-// TODO:  Jilt issue				if ( $never_expires == 1 || ( $product->is_purchasable() && $product->is_on_sale() && ($todays_date < $sale_end_date) ) ) {
 		$live_deal = 1;
 	} else {
 		$live_deal = 0;
 	}
-	//echo "<h1>Live deal</h1>";
-	//print_r($live_deal);
-	//return 1;
+	
 	return $live_deal;
+}
+
+
+function vstbuzz_is_product_freegift( $product_id ) {
+  
+	$is_freegift = VST_FreeGifts::check_if_freegift( $product_id );
+	return $is_freegift;
+  
 }
 
 
@@ -380,7 +377,7 @@ function vstbuzz_product_has_category( $product_id, $category ) {
 		return true;
 	} else {
 		return false;
-	};
+	}
 }
 
 /**
