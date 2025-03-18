@@ -31,8 +31,14 @@ class VST_FreeGifts {
         add_action( 'woocommerce_process_product_meta', array( $this, 'save_freegift_meta_field'), 10, 1 );
         
         // TODO: get correct name for this filter 
-        add_filter( 'woocommerce_vst_cart_price', array( $this, 'display_freegift_price'), 10, 2 );
-        add_filter( 'woocommerce_cart_item_subtotal', array( $this, 'display_freegift_price_on_checkout'), 100, 3 );
+        //add_filter( 'woocommerce_vst_cart_price', array( $this, 'display_freegift_price'), 10, 2 );
+        //add_filter( 'woocommerce_cart_item_subtotal', array( $this, 'display_freegift_price_on_checkout'), 100, 3 );
+        
+        add_action( 'woocommerce_before_calculate_totals', array( $this, 'set_freegift_price_in_cart') );
+        
+        // modify purchasability for freegifts
+        add_filter( 'woocommerce_variation_is_purchasable', array( $this, 'make_freegifts_purchasable'), 20, 2 );
+        add_filter( 'woocommerce_is_purchasable', array( $this, 'make_freegifts_purchasable'), 20, 2 );
         
         add_action( 'woocommerce_add_to_cart_validation', array( $this, 'check_if_allowed_product' ), 10, 3 );
 
@@ -41,11 +47,19 @@ class VST_FreeGifts {
             'all_freegifts'    => self::get_all_freegift_product_ids()
         );
 
-        wp_register_script( 'freegifts-frontend', get_template_directory_uri() . '/js/free-gift-of-the-month.js', array( 'jquery' ), self::$version, true );    
-        wp_localize_script( 'freegifts-frontend', 'freegifts_data', $freegifts_data );
+        wp_register_script( 'freegifts-frontend', get_stylesheet_directory_uri() . '/js/free-gift-of-the-month.js', array( 'jquery' ), self::$version, true );    
+        wp_localize_script( 'freegifts-frontend', 'freegift_data', $freegifts_data );
         
     }
 
+    /**
+     * Filter for 'woocommerce_is_purchasable'
+     * @param int $product_id
+     */
+    public function make_freegifts_purchasable( $product_id ) {
+      return true; // TODO
+    }
+    
     /**
      * Callback for 'woocommerce_product_options_general_product_data'
      * @param int $post_id
@@ -304,8 +318,16 @@ class VST_FreeGifts {
                 else {
                     $available_freegifts = self::get_all_freegift_product_ids();
                     if ( in_array( $product_id, $available_freegifts ) ) {
-                        WC()->cart->add_to_cart($product_id, 1);
-                        wp_send_json_success('OK');
+                        $result = WC()->cart->add_to_cart($product_id, 1);
+                        
+                        if ( $result ) {
+                          wp_send_json_success('OK');
+                        }
+                        else {
+                          //$all_notices  = WC()->session->get( 'wc_notices', array() );
+                          //echo('<pre>' . print_r( $all_notices , 1 ) . '</pre>' );
+                          wp_send_json_error('fail');
+                        }
                     }
                     else wp_send_json_error('404');
                 }
@@ -314,7 +336,25 @@ class VST_FreeGifts {
         }
         else wp_send_json_error('403');
     }
+    
+    public function set_freegift_price_in_cart( $cart_object ) {
 
+        // $hash = cart item unique hash
+        // $value = cart item data
+        foreach ( $cart_object->get_cart() as $hash => $value ) {
+
+            if( self::check_if_freegift( $value[ 'product_id' ] ) ) {
+              $value[ 'data' ]->set_price( $newprice );
+            }
+        }
+    }
+
+    /**
+     * Check whether a product is a freegift
+     * 
+     * @param int $product_id
+     * @return bool
+     */
     static function check_if_freegift( $product_id ) {
         global $wpdb;
         $wp = $wpdb->prefix;
@@ -329,7 +369,7 @@ class VST_FreeGifts {
         $result = $wpdb->get_row( $query_sql, ARRAY_A );
 
        
-        return $result;
+        return (bool)$result;
     }
     
     // fires on order being completed. 
@@ -449,7 +489,7 @@ class VST_FreeGifts {
     
     static function check_if_deal_product_in_cart( $cart = false ) {
 			
-			return true;
+			$result = false;
 			
         if ( ! is_a($cart, 'WC_Cart') ) {
             $cart = WC()->cart;
@@ -457,14 +497,36 @@ class VST_FreeGifts {
         $items = $cart->get_cart();
         
         foreach( $items as $cart_item ) {
-            if (get_post_meta($cart_item['product_id'], '_product_big_deal', true) == 'yes') {
+            if ( self::is_deal_product( $cart_item['product_id'] ) ) {
                 return true;
             }
         }
         
-        return false;
+        return $result;
     }
+    
+    /**
+     * Only products in "Deals" category are counted as deal products
+     * @param int $product_id
+     * @return bool
+     */
+    static function is_deal_product( $product_id ) {
+      
+      $result = false;
 
+      $terms = get_the_terms( $product_id, 'product_cat');
+      
+      if ( is_array( $terms ) ) {
+        foreach ( $terms as $term ) {
+          if ( $term->slug == 'deals' ) {
+            return true;
+          }
+        }
+      }
+      
+      return $result;
+    }
+    
     static function get_claimed_freegift_ids( $user_id ) {
         $freegift_list = (array) get_user_meta($user_id, 'freegifts_list', true);
         return $freegift_list;

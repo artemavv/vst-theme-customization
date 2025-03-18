@@ -123,10 +123,19 @@ $available_points_value = $points_value;
 					$cart_item_real_value    = '';
 					$cart_item_you_save      = '';
 					if ( ! vstbuzz_product_has_category( $product_id, 'the-vault' ) ) {
-						$cart_item_price      = $product_price;
-						$cart_item_real_value = $sym . number_format( $regular_price, 2 );
-            if($save_price > 0) {
-	            $cart_item_you_save = $sym . number_format( $save_price, 2 );
+            
+            if ( ! vstbuzz_is_product_freegift( $product_id ) ) {
+              $cart_item_price      = $product_price;
+              $cart_item_real_value = $sym . number_format( $regular_price, 2 );
+              if($save_price > 0) {
+                $cart_item_you_save = $sym . number_format( $save_price, 2 );
+              } 
+            }
+            else {
+              $cart_item_price         = "FREE";
+              
+              $cart_item_real_value    = $sym . number_format( $regular_price, 2 );
+              $cart_item_you_save      = $cart_item_real_value;
             }
 					} else {
 						if ( $available_points_value >= $regular_price ) {
