@@ -6,11 +6,10 @@
  */
 jQuery(document).ready(function($){        
 	
-    $('.woocommerce').on( 'click', 'ul.shop_table a.claim_free_gift', function() {
+    $('.woocommerce').on( 'click', 'ul.shop_table .claim_free_gift', function() {
 			
   	$(this).hide();
 		
-				// TODO add the gif
         $(this).next().show(); // show loader gif
   
         const freegift_id = $(this).data('freegift-id');

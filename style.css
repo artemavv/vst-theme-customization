@@ -4339,12 +4339,19 @@ input[type=text].perk-code {
 }
 
 .claim_free_gift {
+  transition: all 0.2s ease-in-out;
+  color: #FF6600;
   font-size: 24px;
   font-weight: bold;
   border: 1px solid orange;
   padding: 0px 10px;
   margin-top: 11px;
   display: block;
+  cursor: pointer;
+}
+
+.claim_free_gift:hover {
+  text-decoration: underline; 
 }
 
 .free-gift-price {

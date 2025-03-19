@@ -179,9 +179,9 @@ class VST_FreeGifts {
             ?>
             <li class="cart_item freegifts-header">
                 <?php if ( count($available_freegifts) == 1 ) : ?>
-                    <span><?php _e('You can also claim this Free Gift of the Month', 'vstbuzz' ); ?> &darr;&darr;&darr;</span>
+                    <h4 style="font-weight: bold"><?php _e('You can also claim this Free Gift of the Month', 'vstbuzz' ); ?> &darr;&darr;&darr;</h4>
                 <?php else: ?>
-                    <span><?php _e('You can also claim any of these Free Gifts of the Month', 'vstbuzz' ); ?> &darr;&darr;&darr;</span>  
+                    <h4 style="font-weight: bold"><?php _e('You can also claim any of these Free Gifts of the Month', 'vstbuzz' ); ?> &darr;&darr;&darr;</h4>  
                 <?php endif; ?>
             </li>
 
@@ -194,8 +194,7 @@ class VST_FreeGifts {
                 $meta_box_tech_note_additional = get_post_meta( $product_id, "meta-box-tech-note-additional", true );
                 $product_link                  = $freegift_product->get_permalink();
 
-                $claim_link = sprintf( '<a href="%s" class="claim_free_gift" title="%s" aria-label="%s" data-freegift-id="%s">%s</a>',
-                        "#", 
+                $claim_link = sprintf( '<span class="claim_free_gift" title="%s" aria-label="%s" data-freegift-id="%s">%s</span>',
                         "Claim free gift",
                         "Claim free gift",
                         esc_attr( $product_id ),
@@ -264,7 +263,8 @@ class VST_FreeGifts {
                     <div class="cart_item__total-savings-save"><?php echo $cart_item_you_save; ?></div>
                   </div>
                   <div class="cart_item__total-price">
-                    <?php echo $claim_link; //TODO add loader gif there ?>
+                    <?php echo $claim_link; ?>
+                    <img style="display:none" src="<?php echo get_stylesheet_directory_uri();?>/images/ajax_loader_gray.gif"/>
                   </div>
                   
                 </div>
