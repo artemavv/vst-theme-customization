@@ -12,5 +12,7 @@
 !woocommerce/
 !woocommerce/cart/
 !woocommerce/cart/cart.php
+!includes
+!includes/vstbuzz-add-to-cart.php
 !js
 !js/free-gift-of-the-month.js
