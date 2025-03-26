@@ -19,15 +19,25 @@ function vstbuzz_add_to_cart( $position, $middle_heading = "", $middle_descripti
 	extract( $product_prices );
 
 	$live_deal = vstbuzz_is_product_live( $productID );
-	if ( ! $live_deal ) {
+  $is_free_gift = vstbuzz_is_product_freegift( $productID );
+  
+	if ( ! $live_deal && ! $is_free_gift ) {
 		// Don't show the deal expired button if this is the middle section...
 		?>
       <span class="game-over">Deal Expired</span>
 		<?php
+    
+    expired_subscribe();
 	}
 
-	if ( ! $live_deal ) {
-		expired_subscribe();
+	if ( $is_free_gift ) {
+    
+    // this is a single intance of custom styling; so it is OK to use inline styles
+    ?>
+		<div style="display: inline-block; margin-top: 20px;padding: 17px 60px; background: #FF6600; font-size: 22px; line-height: 160%; color: #fff; ">Free gift</div>
+    
+    <p style="margin-top: 60px;">Buy a product and get this gift for free!</p>
+    <?php
 	}
 
 	// If the deal is live...
