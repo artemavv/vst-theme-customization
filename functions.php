@@ -33,6 +33,7 @@ include_once( 'includes/rank-math-schema.php' );
 include_once( 'includes/booster-buy-once-remove-sell.php');
 include_once( 'includes/vstbuzz-competitions.php');
 include_once( 'functions/free-gift-of-the-month.php' );
+include_once( 'functions/sync-deals-with-apd.php' );
 
 
 // Load theme stylesheets and scripts
