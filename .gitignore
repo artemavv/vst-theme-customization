@@ -13,6 +13,9 @@
 !woocommerce/
 !woocommerce/cart/
 !woocommerce/cart/cart.php
+!woocommerce/content-single-product.php
+!woocommerce/single-product
+!woocommerce/single-product/title.php
 !includes
 !includes/vstbuzz-add-to-cart.php
 !js
