@@ -18,6 +18,13 @@
               'callback' => array( $this, 'rest_api_send_current_deals' ),
             ) );
           } );
+
+        add_action( 'rest_api_init', function () {
+            register_rest_route( 'vstbuzz/v1', '/boxes', array(
+                'methods' => 'GET',
+                'callback' => array( $this, 'rest_api_send_current_boxes' ),
+            ) );
+        } );
     }
 
     public function get_current_deals() {
@@ -105,6 +112,77 @@
         
     }
 
+    /**
+     * Get the contents of current boxes (which are added via ACF Flexible Content)
+     * on a specific page which is currently set as a home page.
+     * 
+     * @return array
+     */
+    public function get_current_boxes() {
+
+        global $wpdb;
+
+        $boxes = array();
+
+        $post_id = 552236;
+
+        $prefix = 'content_blocks_1_deals_';
+
+        $boxes_content_query = $wpdb->get_results(
+            "SELECT * FROM {$wpdb->prefix}postmeta WHERE post_id = '" . $post_id . "' AND meta_key LIKE '$prefix%'", 
+            ARRAY_A
+        );
+
+        // e.g. 2025-05-16 09:01:00
+        // TODO figure out the timezone
+        $next_deal_time = $wpdb->get_var(
+            "SELECT meta_value FROM {$wpdb->prefix}postmeta WHERE post_id = '" . $post_id . "' AND meta_key = 'content_blocks_1_next_deal' "
+        );
+
+        $next_deal_timestamp = strtotime($next_deal_time);
+
+        $start_date = date('Y-m-d 00:00:00', strtotime('-7 days'));
+
+        foreach ( $boxes_content_query as $box_data ) {
+            
+            $chunks = explode('_',str_replace( $prefix, '', $box_data['meta_key']));
+
+            $box_number = intval($chunks[0]);
+
+            $deal_id = $box_data['meta_value'];
+
+            $deal_product = new WC_product($deal_id);
+            $product_prices = vstbuzz_get_product_prices( $deal_product );
+
+            /**
+             * @var number $sale_price
+             * @var number $regular_price
+             * @var number $save_price
+             */
+            extract($product_prices);
+            
+            $box_data = array(
+                'link'                   => get_permalink($deal_id),
+                'off'                    => get_field('content_tab_off', $deal_id),
+                'item_title'             => get_field('content_tab_by', $deal_id),
+                'sale_price_dates_from'  => get_post_meta($deal_id, '_sale_price_dates_from', true),
+                'sale_price_dates_to'    => get_post_meta($deal_id, '_sale_price_dates_to', true),
+                'image'                  => get_the_post_thumbnail_url($deal_id, 'medium'),
+                'save_price'             => $save_price,
+                'regular_price'          => $regular_price,
+                'sale_price'             => $sale_price,
+                'sales_amount'           => $this->get_cached_product_sales_for_period( $deal_id, $start_date )
+            );
+
+            $boxes[$box_number] = $box_data;
+        }
+
+        $boxes['next_deal_date'] = $next_deal_timestamp;
+                 
+        return $boxes;
+        
+        
+    }
 
     public static function get_cached_product_sales_for_period( $product_id, $start_date ) {
         $cache_key = 'product_sales_' . $product_id . '_' . $start_date;
@@ -173,6 +251,19 @@
             $vstbuzz_deals = $this->get_current_deals();
 
            return $vstbuzz_deals;
+        }
+    
+        return new WP_Error( 'no_key', 'Invalid key', array( 'status' => 404 ) );
+    }
+
+
+    public function rest_api_send_current_boxes( WP_REST_Request $request ) {
+        $key = $request->get_param( 'send_deals_to_apd' );
+
+        if ( $key === self::$secret_key ) {
+            $vstbuzz_boxes = $this->get_current_boxes();
+
+           return $vstbuzz_boxes;
         }
     
         return new WP_Error( 'no_key', 'Invalid key', array( 'status' => 404 ) );
