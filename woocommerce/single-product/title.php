@@ -41,7 +41,10 @@ $you_save_percent = round( ( $save_price / $regular_price ) * 100 ) . '%';
 $points = round(WC_Points_Rewards_Product::get_points_earned_for_product_purchase($product));
 $live_deal = vstbuzz_is_product_live( $productID );
 
-if ( is_product() && has_term( 'competitions', 'product_cat' ) ) {
+if ( $product->is_type( 'subscription' ) ) {
+  include ('title-subscription.php');	
+}
+else if ( is_product() && has_term( 'competitions', 'product_cat' ) ) {
   include ('title-competitions.php');
 } else {
   include ('title-common.php');

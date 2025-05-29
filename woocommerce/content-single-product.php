@@ -70,6 +70,7 @@ $user_data = array(
 	'points_value' => $points_value,
 	'cart'         => $small_cart
 );
+
 woocommerce_template_single_title();
 
 $product_basic  = get_basic_product_info( $deal_id );
@@ -141,6 +142,7 @@ if ( post_password_required() ) {
 	echo get_the_password_form();
 	return;
 }
+
 ?>
 
 <article id="product-<?php the_ID(); ?>" <?php wc_product_class( '', $product ); ?>>
