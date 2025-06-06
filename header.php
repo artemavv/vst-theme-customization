@@ -56,7 +56,15 @@ global $woo_options, $woocommerce;
 
   <header id="header" class="col-full">
     <div class="wrapper">
-		<?php woo_header_inside(); ?>
+	    <?php //woo_header_inside(); ?>
+      <a id="logo"  href="https://vstbuzz.com/" title="Audio Software Deals">
+        <picture class="logo">
+          <img src="/wp-content/themes/vstbuzz/images/logo-vstbuzz-108x46.png" alt="VSTBuzz">
+        </picture>
+        <picture class="logo-white">
+          <img src="/wp-content/themes/vstbuzz-v2/images/VSTBuzz1_white.png" alt="VSTBuzz">
+        </picture>
+      </a>
       <div class="header__deals header__deals_hidden">
 		  <?php if ( ! is_page( array( 'cart', 'checkout' ) ) ) { ?>
             <button class="header__deals-title">Current deals</button>
@@ -68,19 +76,19 @@ global $woo_options, $woocommerce;
 					$row_number = 0;
 					while ( have_rows( 'content_blocks', $homePageID ) ) {
 						the_row();
-						$boxes = get_sub_field( 'boxes' );
+						$boxes = get_sub_field( 'deals' );
             if(is_array($boxes)) {
 
-				$row_number++;
-							
+				      $row_number++;
+
 							if ( $row_number > 1 ) {
 								continue;
 							}
 
 	            $currencySymbol = get_woocommerce_currency_symbol();
 						  foreach ( $boxes as $box ) {
-							$box_type = $box['box_type'];
-							if ( $box_type == 'Deal' ) {
+//							$box_type = $box['box_type'];
+//							if ( $box_type == 'Deal' ) {
 								$deal_id    = $box['deal'];
 								$instance   = new WC_product( $deal_id );
                 $product_prices = vstbuzz_get_product_prices( $instance );
@@ -114,27 +122,27 @@ global $woo_options, $woocommerce;
 								$link            = get_permalink( $deal_id );
 								$description     = wp_trim_words( get_field( 'content_blocks', $deal_id )[0]['description'], $num_words = 30, $more = '...' );
 								$timerEnabled    = vstbuzz_product_has_category( $deal_id, 'Deals' );
-							} else {
-                // disable manually added deals
-                continue;
-//								$now                   = time();
-//								$backgroundImage       = $box['background_image'];
-//								$deal_id               = rand( 1000, 9999 );
-//								$link                  = $box['link'];
-//								$description           = wp_trim_words( $box['flipside_text'], $num_words = 30, $more = '...' );
-//								$image                 = $box['front_image'];
-//								$item_title            = $box['front_text'];
-//								$sale_price_dates_from = $now;
-//								$timer_end_string      = $box['timer_end'];
-//								$date                  = new DateTime( $timer_end_string, new DateTimeZone( 'Europe/Dublin' ) );
-//								$timer_end             = $date->format( 'U' );
-//								$sale_price_dates_to   = $timer_end;
-//								$timerEnabled          = ! empty( $timer_end_string );
-//								$sale_price            = '';
-//								$regular_price         = '';
-//								$save_price            = '';
-//								$content_tab_off       = '';
-							}
+//							} else {
+//                // disable manually added deals
+//                continue;
+////								$now                   = time();
+////								$backgroundImage       = $box['background_image'];
+////								$deal_id               = rand( 1000, 9999 );
+////								$link                  = $box['link'];
+////								$description           = wp_trim_words( $box['flipside_text'], $num_words = 30, $more = '...' );
+////								$image                 = $box['front_image'];
+////								$item_title            = $box['front_text'];
+////								$sale_price_dates_from = $now;
+////								$timer_end_string      = $box['timer_end'];
+////								$date                  = new DateTime( $timer_end_string, new DateTimeZone( 'Europe/Dublin' ) );
+////								$timer_end             = $date->format( 'U' );
+////								$sale_price_dates_to   = $timer_end;
+////								$timerEnabled          = ! empty( $timer_end_string );
+////								$sale_price            = '';
+////								$regular_price         = '';
+////								$save_price            = '';
+////								$content_tab_off       = '';
+//							}
 							$you_save_num   = $regular_price - $sale_price;
 							?>
                           <div class="header__deals-item" id="product-<?php echo $deal_id; ?>">

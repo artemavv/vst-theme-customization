@@ -33,7 +33,9 @@ include_once( 'includes/rank-math-schema.php' );
 include_once( 'includes/booster-buy-once-remove-sell.php');
 include_once( 'includes/vstbuzz-competitions.php');
 include_once( 'functions/free-gift-of-the-month.php' );
+include_once( 'includes/shortcodes.php');
 include_once( 'functions/sync-deals-with-apd.php' );
+
 
 
 // Load theme stylesheets and scripts
@@ -115,6 +117,11 @@ function theme_enqueue_styles_scripts() {
     add_filter('body_class', function ($classes) {
       $classes[] = 'competitions'; return $classes;
     });
+  }
+
+  /* Custom styles for new landing page */
+  if ( is_page( 552236 ) ) {
+      wp_enqueue_style( 'page-552236', get_stylesheet_directory_uri() . '/css/page-552236.css', [], filemtime( get_theme_file_path( 'css/page-552236.css' ) ) );
   }
 
 	/* https://dbrekalo.github.io/simpleLightbox/ */
@@ -329,8 +336,11 @@ function vstbuzz_clear_cart_of_expired_products() {
 			$prod_id   = ( isset( $prod_in_cart['variation_id'] ) && $prod_in_cart['variation_id'] != 0 ) ? $prod_in_cart['variation_id'] : $prod_in_cart['product_id'];
 			$live_deal = vstbuzz_is_product_live( $prod_id ) || vstbuzz_is_product_freegift( $prod_id ) ;
 
+      $product = wc_get_product( $prod_id );
+      $is_subscription = is_object( $product ) ? $product->is_type( 'subscription' ) : false;
+      
 			// If the product is no longer available for purchase...
-			if ( $live_deal == 0 ) {
+			if ( $live_deal == 0 && ! $is_subscription ) {
 				$prod_unique_id = WC()->cart->generate_cart_id( $prod_id );
 				// Remove it from the cart by un-setting it
 				unset( WC()->cart->cart_contents[ $prod_unique_id ] );
@@ -342,7 +352,7 @@ function vstbuzz_clear_cart_of_expired_products() {
 
 function vstbuzz_is_product_live( $prod_id, $skip_on_sale_check = false ) {
 	$product = wc_get_product( $prod_id );
-  
+
 	$todays_date = current_time( 'timestamp', true );
 
 	$sale_end_date = get_post_meta( $prod_id, '_sale_price_dates_to', true );
@@ -354,22 +364,21 @@ function vstbuzz_is_product_live( $prod_id, $skip_on_sale_check = false ) {
 	}
 
 	// Figure out if this product is available for purchase or not...
-  
 	if ( $never_expires == 1 || ( ( ! $skip_on_sale_check && $product->is_on_sale() ) && ( $todays_date < $sale_end_date ) ) ) {
 		$live_deal = 1;
 	} else {
 		$live_deal = 0;
 	}
-	
+
 	return $live_deal;
 }
 
 
 function vstbuzz_is_product_freegift( $product_id ) {
-  
+
 	$is_freegift = VST_FreeGifts::check_if_freegift( $product_id );
 	return $is_freegift;
-  
+
 }
 
 
@@ -1779,72 +1788,6 @@ function vstbuzz_wpf_dev_process_filter( $fields, $entry, $form_data ) {
 add_filter( 'wpforms_process_filter', 'vstbuzz_wpf_dev_process_filter', 10, 3 );
 
 
-function list_purchases_of_product_shortcode($atts) {
-	global $wpdb, $product;
-
-  return '<p>purchased codes will be here</p>';
-	// Shortcode attributes
-	$attributes = shortcode_atts(array(
-		'id' => '',
-	), $atts);
-
-	// Use current product ID if not provided
-	$product_id = !empty($attributes['id']) ? $attributes['id'] : (isset($product) ? $product->get_id() : '');
-
-	if (empty($product_id)) {
-		return 'Product ID is not specified or not found.';
-	}
-
-	// SQL query to get all order items for a specific product ID
-	$query = "
-        SELECT order_items.order_id, order_items.order_item_id 
-        FROM {$wpdb->prefix}woocommerce_order_items as order_items
-        JOIN {$wpdb->prefix}woocommerce_order_itemmeta as order_itemmeta
-        ON order_items.order_item_id = order_itemmeta.order_item_id
-        WHERE order_itemmeta.meta_key = '_product_id'
-        AND order_itemmeta.meta_value = %d
-        AND order_items.order_item_type = 'line_item'
-    ";
-
-	// Execute query
-	$results = $wpdb->get_results($wpdb->prepare($query, $product_id), ARRAY_A);
-
-	if (empty($results)) {
-		return 'No purchases found for this product.';
-	}
-
-	// Start output table
-	$output = '<table><tr><th>Ticket number</th><th>User Name</th><th>User Email</th></tr>';
-
-	// Loop through each order
-	foreach ($results as $result) {
-		$order = wc_get_order($result['order_id']);
-		$user = $order->get_user();
-
-	  // Get serial number for each order item
-	  $serial_number = $wpdb->get_var($wpdb->prepare(
-		  "SELECT meta_value FROM {$wpdb->prefix}woocommerce_order_itemmeta 
-             WHERE order_item_id = %d AND meta_key = 'Serial Number(s)'",
-		  $result['order_item_id']
-	  ));
-
-		$output .= '<tr>';
-		$output .= '<td>' . esc_html($serial_number) . '</td>';
-		$output .= '<td>' . esc_html($user ? $user->display_name : 'Guest') . '</td>';
-		$output .= '<td>' . esc_html($user ? $user->user_email : 'N/A') . '</td>';
-		$output .= '</tr>';
-	}
-
-	// Close table
-	$output .= '</table>';
-
-	return $output;
-}
-
-// Adding Shortcode
-add_shortcode('list_purchases_of_product', 'list_purchases_of_product_shortcode');
-
-
 /* Add custom class to the competitions page */
 //add_filter('body_class', function ($classes) {
 //  if (
@@ -2169,70 +2112,15 @@ function get_filtered_products() {
 add_action('wp_ajax_get_filtered_products', 'get_filtered_products');
 add_action('wp_ajax_nopriv_get_filtered_products', 'get_filtered_products');
 
-function countdown_shortcode($atts) {
-    $atts = shortcode_atts([
-        'date' => '',
-    ], $atts);
-
-    $date = $atts['date'];
-    if (empty($date)) {
-        return "Дата не указана.";
+add_action('get_header', function ($name) {
+    if ($name === 'dark') {
+        add_action('wp_enqueue_scripts', function () {
+            wp_enqueue_style(
+                'header-dark-style',
+                get_theme_file_uri('/css/header-dark.css'),
+                [],
+                filemtime(get_theme_file_path('/css/header-dark.css'))
+            );
+        });
     }
-	
-    $timestamp = strtotime($date);
-    if ($timestamp === false) {
-        return "Неверный формат даты.";
-    }
-	
-    $countdown_id = 'countdown_' . uniqid();
-
-    ob_start();
-    ?>
-    <div id="<?php echo esc_attr($countdown_id); ?>" class="countdown-timer">
-        <div class="counter-wrapper">
-			<div>
-				<span class="days">0</span> <span>days</span> 
-			</div>
-			<div>
-				<span class="hours">0</span> <span>hours</span> 
-			</div>
-			<div>
-				<span class="minutes">0</span> <span>minutes</span> 
-			</div>
-			<div>
-				<span class="seconds">0</span> <span>seconds</span>
-			</div>
-		</div>
-		<p style="margin: 0px;">
-			Want to get notified when we go live? Enter your email address below and you'll be the first to know!
-		</p>
-		<script async="" src="//static.klaviyo.com/onsite/js/R4CFFK/klaviyo.js?ver=3.4.2"></script>
-		<div class="subscr-form">
-			<div class="klaviyo-form-XYB9Um"></div>
-		</div>
-    </div>
-    <script>
-        (function() {
-            const countdownElement = document.getElementById('<?php echo esc_js($countdown_id); ?>');
-            const targetDate = <?php echo esc_js($timestamp * 1000); ?>;
-            function updateCountdown() {
-                const now = new Date().getTime();
-                const distance = targetDate - now;
-
-                const days = Math.floor(distance / (1000 * 60 * 60 * 24));
-                const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-                const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-                countdownElement.querySelector('.days').textContent = days;
-                countdownElement.querySelector('.hours').textContent = hours;
-                countdownElement.querySelector('.minutes').textContent = minutes;
-                countdownElement.querySelector('.seconds').textContent = seconds;
-            }
-            setInterval(updateCountdown, 1000);
-            updateCountdown();
-        })();
-    </script>
-    <?php
-    return ob_get_clean();
-}
-add_shortcode('countdown', 'countdown_shortcode');
+});

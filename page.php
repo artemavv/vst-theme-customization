@@ -10,8 +10,16 @@ if (!defined('ABSPATH')) exit;
  * @package WooFramework
  * @subpackage Template
  */
-get_header();
+if (is_page(552236)) {
+  get_header('dark');
+} else {
+  get_header();
+}
 global $woo_options;
+
+if (post_password_required()) {
+    echo get_the_password_form();
+} else {
 ?>
 
 <div id="content" class="page col-full">
@@ -54,8 +62,10 @@ global $woo_options;
                 <?php } ?>
 
                 <?php elseif (get_row_layout() == 'full_width'): ?>
-
-                  <section class="entry text-media">
+                <?php
+                $custom_class = get_sub_field('custom_class');
+                 ?>
+                  <section class="entry text-media <?php echo $custom_class; ?>">
                     <div class="wrapper">
 
                       <?php if (get_sub_field('sub_heading')) { ?>
@@ -67,8 +77,10 @@ global $woo_options;
                   </section><!-- /.entry -->
 
                 <?php elseif (get_row_layout() == '2_cols'): ?>
-
-                  <section class="entry two-cols">
+                <?php
+                $custom_class = get_sub_field('custom_class');
+                 ?>
+                  <section class="entry two-cols  <?php echo $custom_class; ?>">
                     <div class="wrapper">
 
                       <div class="alignleft">
@@ -81,8 +93,6 @@ global $woo_options;
                     </div><!-- /.wrapper -->
                   </section><!-- /.entry -->
 
-									
-									
                 <?php elseif (get_row_layout() == 'big_optin'): ?>
 
                   <section id="intro-message" class="home-section">
@@ -136,115 +146,7 @@ global $woo_options;
                       }
                     ?>
                   </section><!--/#intro-message-->
-									
-                <?php elseif (get_row_layout() == 'bonus_deals_list'): ?>
 
-									<section class="box_list">
-                    <div class="wrapper prod_wrap main_page">
-                      <div class="products">
-                        <?php
-                        $boxes = get_sub_field('boxes');
-                        foreach ($boxes as $box) {
-
-                          $box_type = $box['box_type'];
-                          if ($box_type == 'Deal') {
-                            $deal_id = $box['deal'];
-                            $instance = new WC_product($deal_id);
-                            $sym = get_woocommerce_currency_symbol();
-                             $product_prices = vstbuzz_get_product_prices( $instance );
-                             /**
-                             * @var number $sale_price
-                             * @var number $regular_price
-                             * @var number $save_price
-                             */
-                             extract($product_prices);
-
-                            $content_tab_off = get_field('content_tab_off', $deal_id);
-                            $item_title = get_field('content_tab_by', $deal_id);
-                            $sale_price_dates_from = get_post_meta($deal_id, '_sale_price_dates_from', true);
-                            $sale_price_dates_to = get_post_meta($deal_id, '_sale_price_dates_to', true);
-                            $image = get_the_post_thumbnail_url($deal_id, 'medium');
-
-                            $backgroundImage = get_field('content_blocks', $deal_id)[0]['background_image'];
-                            $link = get_permalink($deal_id);
-	                          $description = wp_trim_words(get_field('content_blocks', $deal_id)[0]['description'], $num_words = 30, $more = '...');
-                            $timerEnabled = vstbuzz_product_has_category($deal_id, 'Deals');
-                          } else {
-                            $now = time();
-	                          $backgroundImage = $box['background_image'];
-	                          $deal_id = rand(1000, 9999);
-                            $link = $box['link'];
-                            $description = wp_trim_words($box['flipside_text'], $num_words = 30, $more = '...');
-                            $image = $box['front_image'];
-                            $item_title = $box['front_text'];
-                            $sale_price_dates_from = $now;
-                            $timer_end_string = $box['timer_end'];
-                            $date = new DateTime($timer_end_string, new DateTimeZone('Europe/Dublin'));
-                            $timer_end = $date->format('U');
-                            $sale_price_dates_to = $timer_end;
-	                          $timerEnabled = !empty($timer_end_string);
-	                          $sale_price = 0;
-	                          $regular_price = 0;
-	                          $save_price = 0;
-	                          $sym = '';
-	                          $content_tab_off = '';
-                          }
-
-                          ?>
-                            <section style="background-image: url(<?php echo $backgroundImage; ?>);" class="product product-bonus-deal" id="product-<?php echo $deal_id; ?>-bottom">
-                              <div class="product_hover">
-                                <a href="<?php echo $link; ?>"></a>
-                                <h3><a href="<?php echo $link; ?>"><?php echo $item_title; ?></a></h3>
-                                <?php echo '<p>' . $description . '</p>'; ?>
-                                <div class="hover_meta">
-	                                <?php if($sale_price > 0 || $regular_price > 0) { ?>
-                                    <div class="h_m_price">
-                                      <?php echo $sym . $sale_price; ?>
-                                    </div>
-                                    <div class="values">
-                                      <p>Real value: <span><?php echo $sym . $regular_price; ?></span></p>
-                                      <p>You save: <span><?php echo $sym . $save_price; ?></span></p>
-                                    </div>
-                                  <?php } ?>
-                                  <div class="link">
-                                    <a href="<?php echo $link; ?>" class="button">Get it now</a>
-                                  </div>
-                                </div>
-                              </div>
-                              <div></div>
-                              <a class="vert-align product__image" href="#"><img src="<?php echo $image; ?>" alt="<?php echo esc_attr($item_title); ?>"/></a>
-                              <div class="vert-align product__details">
-                                <?php if(!empty($content_tab_off)) { ?>
-                                <h5 class="product__off"><?php echo $content_tab_off; ?></h5>
-                                <?php } ?>
-                                <h3 class="product__title"><a href="#" class="product__title-link"><?php echo $item_title; ?></a></h3>
-                                <?php if($sale_price > 0) { ?>
-                                  <div class="price product__price"><span><?php echo $sym . $sale_price; ?></span></div>
-                                <?php } ?>
-                                <?php if($regular_price > 0 && $regular_price > $sale_price) { ?>
-                                <div class="values product__values">
-                                  <p>Real value: <span><?php echo $sym . $regular_price; ?></span> You save: <span><?php echo $sym . $save_price; ?></span></p>
-                                </div>
-                                <?php } ?>
-	                              <?php if ($timerEnabled) { ?>
-                                <div class="meta product__timer">
-                                    <div class="timer"><span></span>
-                                      <script type="text/javascript">
-                                        timer("<?php echo $sale_price_dates_from;?>", "<?php echo $sale_price_dates_to;?>", "<?php echo $deal_id . "-bottom"; ?>");
-                                      </script>
-                                    </div>
-                                </div>
-                              <?php } ?>
-                              </div>
-                            </section>
-                            <?php }
-														
-														?>
-									
-													
-									</section>
-									
-									
                 <?php elseif (get_row_layout() == 'small_optin'):
 
                   $heading = get_sub_field('heading');
@@ -254,23 +156,74 @@ global $woo_options;
 	                $source_id = get_sub_field('source_id');
 	                echo get_new_deals($source_id, "new-deals_home", $heading, $subheading, $input_placeholder, $button_text);
 
-                elseif (get_row_layout() == 'logos'): ?>
-
-                  <section class="entry logos">
+                elseif (get_row_layout() == 'logos'):
+                $sliderID = md5(rand(1000, 9999));
+                $alt_carousel = get_sub_field('alt_carousel');
+                $wrapper_class = '';
+                if($alt_carousel) {
+                  $wrapper_class = 'logos__wrapper';
+                }
+                ?>
+                  <section class="entry logos" id="<?php echo $sliderID; ?>">
                     <div class="wrapper">
                         <h3 class="logos__title"><?php echo get_sub_field('description'); ?></h3>
+                        <?php
+                        $content = get_sub_field('content');
+                        if(!empty($content)) {
+                          echo '<p class="logos__content">' . $content . '</p>';
+                        }
+                         ?>
                       <?php
                       $images = get_sub_field('images');
 
+                      $classes = 'logos__carousel';
+                      if(!$alt_carousel) {
+                        $classes = "logos-owl owl-carousel";
+                      }
                       if ($images): ?>
-                        <ul>
+                        <div class="<?php echo $wrapper_class; ?>">
+                        <ul class="<?php echo $classes; ?>">
                           <?php foreach ($images as $image): ?>
                             <li><img src="<?php echo $image['sizes']['large']; ?>" alt="<?php echo $image['alt']; ?>"/></li>
                           <?php endforeach; ?>
                         </ul>
+                        <?php
+                        // repeat logos for a smooth transition
+                        if($alt_carousel) { ?>
+                        <ul class="<?php echo $classes; ?>">
+                          <?php foreach ($images as $image): ?>
+                            <li><img src="<?php echo $image['sizes']['large']; ?>" alt="<?php echo $image['alt']; ?>"/></li>
+                          <?php endforeach; ?>
+                        </ul>
+                        <?php } ?>
+                        </div>
                       <?php endif; ?>
 
                     </div><!-- /.wrapper -->
+                    <?php if(!$alt_carousel) { ?>
+                      <script>
+                      jQuery(document).ready(function($) {
+                              $("#<?php echo $sliderID; ?> .owl-carousel.logos-owl").owlCarousel({
+                              nav: true,
+                              navText: ["<", ">"],
+                              autoplay: true,
+                              autoplayHoverPause: true,
+                              loop: true,
+                              responsive: {
+                                0: {
+                                  items: 3,
+                                },
+                                768: {
+                                  items: 4,
+                                },
+                                1024: {
+                                  items: 7,
+                                },
+                              },
+                            });
+                                            });
+                      </script>
+                    <?php } ?>
                   </section><!-- /.entry -->
 
                 <?php elseif (get_row_layout() == 'box_list'): ?>
@@ -280,112 +233,7 @@ global $woo_options;
                       <div class="products">
                         <?php
                         $boxes = get_sub_field('boxes');
-                        foreach ($boxes as $box) {
-
-                          $box_type = $box['box_type'];
-                          if ($box_type == 'Deal') {
-                            $deal_id = $box['deal'];
-                            $instance = new WC_product($deal_id);
-                            $sym = get_woocommerce_currency_symbol();
-                             $product_prices = vstbuzz_get_product_prices( $instance );
-                             /**
-                             * @var number $sale_price
-                             * @var number $regular_price
-                             * @var number $save_price
-                             */
-                             extract($product_prices);
-
-                            if ($sale_price == 0) {
-                              $bundled_items = $wpdb->get_results("select * from {$wpdb->prefix}woocommerce_bundled_items where bundle_id = $deal_id and menu_order = 0");
-                              foreach ($bundled_items as $bundled_item) {
-                                $first_bundled_product = wc_get_product($bundled_item->product_id);
-                                $sale_price = $first_bundled_product->get_sale_price();
-                                if ( ! $sale_price ) {
-                                  $sale_price = $first_bundled_product->get_attribute( 'sale_price' );
-                                }
-                                $save_price = $instance->get_regular_price() - $first_bundled_product->get_sale_price();
-                              }
-                            }
-
-                            $content_tab_off = get_field('content_tab_off', $deal_id);
-                            $item_title = get_field('content_tab_by', $deal_id);
-                            $sale_price_dates_from = get_post_meta($deal_id, '_sale_price_dates_from', true);
-                            $sale_price_dates_to = get_post_meta($deal_id, '_sale_price_dates_to', true);
-                            $image = get_the_post_thumbnail_url($deal_id, 'medium');
-
-                            $backgroundImage = get_field('content_blocks', $deal_id)[0]['background_image'];
-                            $link = get_permalink($deal_id);
-	                          $description = wp_trim_words(get_field('content_blocks', $deal_id)[0]['description'], $num_words = 30, $more = '...');
-                            $timerEnabled = vstbuzz_product_has_category($deal_id, 'Deals');
-                          } else {
-                            $now = time();
-	                          $backgroundImage = $box['background_image'];
-	                          $deal_id = rand(1000, 9999);
-                            $link = $box['link'];
-                            $description = wp_trim_words($box['flipside_text'], $num_words = 30, $more = '...');
-                            $image = $box['front_image'];
-                            $item_title = $box['front_text'];
-                            $sale_price_dates_from = $now;
-                            $timer_end_string = $box['timer_end'];
-                            $date = new DateTime($timer_end_string, new DateTimeZone('Europe/Dublin'));
-                            $timer_end = $date->format('U');
-                            $sale_price_dates_to = $timer_end;
-	                          $timerEnabled = !empty($timer_end_string);
-	                          $sale_price = 0;
-	                          $regular_price = 0;
-	                          $save_price = 0;
-	                          $sym = '';
-	                          $content_tab_off = '';
-                          }
-
-                          ?>
-                            <section style="background-image: url(<?php echo $backgroundImage; ?>);" class="product" id="product-<?php echo $deal_id; ?>-bottom">
-                              <div class="product_hover">
-                                <a href="<?php echo $link; ?>"></a>
-                                <h3><a href="<?php echo $link; ?>"><?php echo $item_title; ?></a></h3>
-                                <?php echo '<p>' . $description . '</p>'; ?>
-                                <div class="hover_meta">
-	                                <?php if($sale_price > 0 || $regular_price > 0) { ?>
-                                    <div class="h_m_price">
-                                      <?php echo $sym . $sale_price; ?>
-                                    </div>
-                                    <div class="values">
-                                      <p>Real value: <span><?php echo $sym . $regular_price; ?></span></p>
-                                      <p>You save: <span><?php echo $sym . $save_price; ?></span></p>
-                                    </div>
-                                  <?php } ?>
-                                  <div class="link">
-                                    <a href="<?php echo $link; ?>" class="button">Get it now</a>
-                                  </div>
-                                </div>
-                              </div>
-                              <div></div>
-                              <a class="vert-align product__image" href="#"><img src="<?php echo $image; ?>" alt="<?php echo esc_attr($item_title); ?>"/></a>
-                              <div class="vert-align product__details">
-                                <?php if(!empty($content_tab_off)) { ?>
-                                <h5 class="product__off"><?php echo $content_tab_off; ?></h5>
-                                <?php } ?>
-                                <h3 class="product__title"><a href="#" class="product__title-link"><?php echo $item_title; ?></a></h3>
-                                <?php if($sale_price > 0) { ?>
-                                  <div class="price product__price"><span><?php echo $sym . $sale_price; ?></span></div>
-                                <?php } ?>
-                                <?php if($regular_price > 0 && $regular_price > $sale_price) { ?>
-                                <div class="values product__values">
-                                  <p>Real value: <span><?php echo $sym . $regular_price; ?></span> You save: <span><?php echo $sym . $save_price; ?></span></p>
-                                </div>
-                                <?php } ?>
-	                              <?php if ($timerEnabled) { ?>
-                                <div class="meta product__timer">
-                                    <div class="timer"><span></span>
-                                      <script type="text/javascript">
-                                        timer("<?php echo $sale_price_dates_from;?>", "<?php echo $sale_price_dates_to;?>", "<?php echo $deal_id . "-bottom"; ?>");
-                                      </script>
-                                    </div>
-                                </div>
-                              <?php } ?>
-                              </div>
-                            </section>
-                            <?php }
+                        echo get_home_deals($boxes, $product_class = "");
                         ?>
 
                           <?php
@@ -448,6 +296,66 @@ global $woo_options;
                       </div><!--/.products-->
                     </div><!-- /.wrapper -->
                   </section><!-- /.entry -->
+
+                <?php elseif (get_row_layout() == 'box_list_2'): ?>
+                  <section class="box_list_2">
+                    <div class="wrapper main_page">
+                        <?php
+                        $boxes = get_sub_field('deals');
+                        echo get_box_list_2($boxes, $product_class = "");
+                        ?>
+                        <?php
+$next_deal = get_sub_field('next_deal');
+if($next_deal) { ?>
+  <section class="box-item box-item__coming-soon" id="product-new-deals">
+                          <h4 class="box__manufacturer"><?php echo __('Coming soon', 'vstbuzz'); ?></h4>
+                          <h3 class="box__title"><?php echo __('Next Deal in', 'vstbuzz'); ?></h3>
+                          <?php
+                          $timestamp = strtotime($next_deal);
+                          if ($timestamp > time()) { ?>
+                        <span class="timer"></span>
+                        <script type="text/javascript">
+                            timer("<?php echo time(); ?>", "<?php echo esc_attr($timestamp); ?>", "new-deals");
+                        </script>
+                            <?php
+                          } else {
+                            echo '<span class="timer">' . __('Coming soon', 'vstbuzz') . '</span>';
+                          }
+                          ?>
+                          <div class="box__image">
+                            <img src="<?php echo get_stylesheet_directory_uri() . '/images/chest_full.png'; ?>" alt="<?php echo __('Next Deal in', 'vstbuzz'); ?>" />
+                          </div>
+                        </section>
+  <?php
+}
+ ?>
+
+                    </div><!-- /.wrapper -->
+                  </section><!-- /.entry -->
+
+                  <?php elseif (get_row_layout() == 'box_list_bonus_deals' ): ?>
+
+<section class="box_list" id="bonus-deals">
+  <div class="wrapper prod_wrap main_page" style="margin-bottom: 50px;">
+<?php /*
+  <h2 style="
+    text-align: center;
+    margin: 60px 30px;
+    font-size: 40px;
+    font-weight: bold;
+    text-transform: uppercase;
+">Check out these bonus deals!</h2>*/?>
+
+    <div class="products bonus-deals">
+      <?php
+      $boxes = get_sub_field('boxes');
+      echo get_home_deals($boxes, $product_class = "bonus-deal");
+      ?>
+  
+
+    </div><!--/.products-->
+  </div><!-- /.wrapper -->
+</section><!-- /.entry -->
 
                 <?php elseif (get_row_layout() == 'spotlights'): ?>
 
@@ -592,11 +500,19 @@ global $woo_options;
 
                 <?php elseif (get_row_layout() == 'free_products_promo'): ?>
 
-               
-                  <section class="free-products-promo">
-	                  <h2 class="free-products-promo__title"><?php the_sub_field('title'); ?></h2>
-                    <a href="<?php the_sub_field('button_link'); ?>" class="free-products-promo__button"><?php the_sub_field('button_title'); ?></a>
-                    <a href="<?php the_sub_field('button_link'); ?>" style="margin-top: 50px;">
+               <?php
+                $custom_class = get_sub_field('custom_class');
+                ?>
+                  <section class="free-products-promo <?php echo $custom_class; ?>">
+                  <div class="free-products-promo__title-wrap">
+                  <?php $subtitle = get_sub_field('subtitle');
+                  if(!empty($subtitle)) { ?>
+                    <p class="free-products-promo__subtitle"><?php echo $subtitle; ?></p>
+                  <?php } ?>
+	                  <a href="<?php the_sub_field('button_link'); ?>" class="free-products-promo__title" target="_blank"><?php the_sub_field('title'); ?></a>
+	                  </div>
+                    <a href="<?php the_sub_field('button_link'); ?>" class="free-products-promo__button" target="_blank"><?php the_sub_field('button_title'); ?></a>
+                    <a href="<?php the_sub_field('button_link'); ?>" class="free-products-promo__image-link" target="_blank">
                       <img src="<?php the_sub_field('image'); ?>" class="free-products-promo__image" alt="<?php echo esc_attr(get_sub_field('button_title')); ?>">
                     </a>
                   </section>
@@ -609,17 +525,18 @@ global $woo_options;
                 } else {
                   $bg = '';
                 }
+                $custom_class = get_sub_field('custom_class');
                 ?>
-                  <section class="products-promo-columns" <?php echo $bg; ?>>
+                  <section class="products-promo-columns <?php echo $custom_class; ?>" <?php echo $bg; ?>>
                   <div class="wrapper">
                     <div class="products-promo-columns__col1">
-                      <a href="<?php the_sub_field('button_link'); ?>">
+                      <a href="<?php the_sub_field('button_link'); ?>" target="_blank">
                         <img src="<?php the_sub_field('image'); ?>" class="products-promo-columns__image" alt="<?php echo esc_attr(get_sub_field('button_title')); ?>">
                       </a>
                     </div>
                     <div class="products-promo-columns__col2">
 	                  <h2 class="products-promo-columns__title"><?php the_sub_field('title'); ?></h2>
-                    <a href="<?php the_sub_field('button_link'); ?>" class="products-promo-columns__button vst-button"><?php the_sub_field('button_title'); ?></a>
+                    <a href="<?php the_sub_field('button_link'); ?>" class="products-promo-columns__button vst-button" target="_blank"><?php the_sub_field('button_title'); ?></a>
                     </div>
                   </div>
                   </section>
@@ -666,5 +583,8 @@ global $woo_options;
 
 
 </div><!-- /#content -->
+<?php
+  }
+ ?>
 
 <?php get_footer(); ?>
